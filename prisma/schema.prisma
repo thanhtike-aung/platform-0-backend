@@ -1,0 +1,92 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = "mysql://root:root@localhost:3306/platform_0"
+}
+
+model User {
+  id                        Int           @id @default(autoincrement())
+  name                      String
+  email                     String        @unique
+  password                  String
+  posts                     Post[]
+  profile                   Profile?
+  comments                  Comment[]
+  reactions                 Reaction[]
+  sent_friend_requests      Friendship[]  @relation("friendship_requester")
+  received_friend_requests  Friendship[]  @relation("friendship_receiver")
+  created_at                DateTime      @default(now())
+  updated_at                DateTime      @updatedAt
+}
+
+model Post {
+  id        Int      @id @default(autoincrement())
+  content   String
+  published Boolean  @default(false)
+  author    User     @relation(fields: [author_id], references: [id])
+  author_id  Int
+  comments  Comment[]
+  reactions Reaction[]
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+
+model Comment {
+  id        Int      @id @default(autoincrement())
+  content   String
+  post      Post     @relation(fields: [post_id], references: [id])
+  post_id    Int
+  author    User     @relation(fields: [author_id], references: [id])
+  author_id  Int
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+
+model Reaction {
+  id        Int      @id @default(autoincrement())
+  type      String
+  post      Post     @relation(fields: [post_id], references: [id])
+  post_id    Int
+  user      User     @relation(fields: [user_id], references: [id])
+  user_id    Int
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+
+model Friendship {
+  id          Int               @id @default(autoincrement())
+  requester_id Int
+  receiver_id  Int
+  status      FriendshipStatus  @default(PENDING)
+  created_at  DateTime          @default(now())
+  requester   User              @relation("friendship_requester", fields: [requester_id], references: [id])
+  receiver    User              @relation("friendship_receiver", fields: [receiver_id], references: [id])
+}
+
+model Profile {
+  id            Int               @id @default(autoincrement())
+  avatar        String?
+  address       String?
+  work          String?
+  relationship  RelationshipStatus?
+  user          User              @relation(fields: [user_id], references: [id])
+  user_id       Int               @unique
+  created_at    DateTime          @default(now())
+  updated_at    DateTime          @default(now())
+}
+
+enum FriendshipStatus {
+  PENDING
+  ACCEPTED
+  BLOCKED
+}
+
+enum RelationshipStatus {
+  single
+  in_relationship
+  married
+  complicated
+}
